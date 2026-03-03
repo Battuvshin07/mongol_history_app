@@ -20,9 +20,14 @@ const connectDB = require('./src/config/db');
 const authRoutes = require('./src/routes/auth.routes');
 const contentRoutes = require('./src/routes/content.routes');
 const personRoutes = require('./src/routes/person.routes');
+const personDetailRoutes = require('./src/routes/person-details.routes');
 const eventRoutes = require('./src/routes/event.routes');
 const quizRoutes = require('./src/routes/quiz.routes');
 const cultureRoutes = require('./src/routes/culture.routes');
+const familyTreeRoutes = require('./src/routes/family-trees.routes');
+const storyRoutes = require('./src/routes/stories.routes');
+const progressRoutes = require('./src/routes/progress.routes');
+const usersRoutes = require('./src/routes/users.routes');
 const adminRoutes = require('./src/routes/admin.routes');
 
 // Import error handling middleware
@@ -84,9 +89,15 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/content', contentRoutes);
 app.use('/api/persons', personRoutes);
+app.use('/api/person-details', personDetailRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/quizzes', quizRoutes);
-app.use('/api/culture', cultureRoutes);
+app.use('/api/cultures', cultureRoutes);
+app.use('/api/culture', cultureRoutes); // backward compat alias
+app.use('/api/family-trees', familyTreeRoutes);
+app.use('/api/stories', storyRoutes);
+app.use('/api/progress', progressRoutes);
+app.use('/api/users', usersRoutes);
 app.use('/api/admin', adminRoutes);
 
 // ============================================

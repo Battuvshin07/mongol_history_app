@@ -1,15 +1,17 @@
 // ============================================
 // Person Controller
-// CRUD for historical persons
+// Matches Flutter admin PersonModel: name, birthYear, deathYear,
+//   shortBio, avatarUrl, tags[], updatedBy
 // Admin: Create, Update, Delete
 // Public: Read, Search
 // ============================================
 
 const Person = require('../models/Person.model');
+const PersonDetail = require('../models/PersonDetail.model');
 const { STATUS, PAGINATION } = require('../config/constants');
 
 /**
- * @desc    Get all persons (with pagination)
+ * @desc    Get all persons (with pagination + search)
  * @route   GET /api/persons
  * @access  Public
  */
@@ -22,17 +24,20 @@ const getAllPersons = async (req, res, next) => {
     );
     const skip = (page - 1) * limit;
 
-    // Search support
     const filter = {};
     if (req.query.search) {
       filter.$or = [
         { name: { $regex: req.query.search, $options: 'i' } },
-        { description: { $regex: req.query.search, $options: 'i' } },
+        { shortBio: { $regex: req.query.search, $options: 'i' } },
+        { tags: { $regex: req.query.search, $options: 'i' } },
       ];
     }
 
+    const sortField = req.query.sort || 'updatedAt';
+    const sortDir = req.query.order === 'asc' ? 1 : -1;
+
     const [persons, total] = await Promise.all([
-      Person.find(filter).sort({ personId: 1 }).skip(skip).limit(limit),
+      Person.find(filter).sort({ [sortField]: sortDir }).skip(skip).limit(limit),
       Person.countDocuments(filter),
     ]);
 
@@ -50,13 +55,13 @@ const getAllPersons = async (req, res, next) => {
 };
 
 /**
- * @desc    Get single person by personId
- * @route   GET /api/persons/:personId
+ * @desc    Get single person by MongoDB _id
+ * @route   GET /api/persons/:id
  * @access  Public
  */
 const getPersonById = async (req, res, next) => {
   try {
-    const person = await Person.findOne({ personId: parseInt(req.params.personId) });
+    const person = await Person.findById(req.params.id);
 
     if (!person) {
       return res.status(STATUS.NOT_FOUND).json({
@@ -81,7 +86,16 @@ const getPersonById = async (req, res, next) => {
  */
 const createPerson = async (req, res, next) => {
   try {
-    const person = await Person.create(req.body);
+    const { name, birthYear, deathYear, shortBio, avatarUrl, tags } = req.body;
+    const person = await Person.create({
+      name,
+      birthYear,
+      deathYear,
+      shortBio,
+      avatarUrl,
+      tags: tags || [],
+      updatedBy: req.user?.id?.toString(),
+    });
 
     res.status(STATUS.CREATED).json({
       success: true,
@@ -95,16 +109,16 @@ const createPerson = async (req, res, next) => {
 
 /**
  * @desc    Update a person
- * @route   PUT /api/persons/:personId
+ * @route   PATCH /api/persons/:id
  * @access  Private/Admin
  */
 const updatePerson = async (req, res, next) => {
   try {
-    const person = await Person.findOneAndUpdate(
-      { personId: parseInt(req.params.personId) },
-      req.body,
-      { new: true, runValidators: true }
-    );
+    const update = { ...req.body, updatedBy: req.user?.id?.toString() };
+    const person = await Person.findByIdAndUpdate(req.params.id, update, {
+      new: true,
+      runValidators: true,
+    });
 
     if (!person) {
       return res.status(STATUS.NOT_FOUND).json({
@@ -124,15 +138,13 @@ const updatePerson = async (req, res, next) => {
 };
 
 /**
- * @desc    Delete a person
- * @route   DELETE /api/persons/:personId
+ * @desc    Delete a person (and their PersonDetail)
+ * @route   DELETE /api/persons/:id
  * @access  Private/Admin
  */
 const deletePerson = async (req, res, next) => {
   try {
-    const person = await Person.findOneAndDelete({
-      personId: parseInt(req.params.personId),
-    });
+    const person = await Person.findByIdAndDelete(req.params.id);
 
     if (!person) {
       return res.status(STATUS.NOT_FOUND).json({
@@ -140,6 +152,9 @@ const deletePerson = async (req, res, next) => {
         message: 'Person not found.',
       });
     }
+
+    // Cascade delete person detail
+    await PersonDetail.findOneAndDelete({ personId: person._id });
 
     res.status(STATUS.OK).json({
       success: true,
@@ -156,4 +171,4 @@ module.exports = {
   createPerson,
   updatePerson,
   deletePerson,
-};
+};

@@ -1,6 +1,7 @@
 // ============================================
 // Culture Controller
 // CRUD for cultural data
+// Match admin CultureModel: title, description, coverImageUrl, order, updatedBy
 // Admin: Create, Update, Delete
 // Public: Read
 // ============================================
@@ -9,8 +10,8 @@ const Culture = require('../models/Culture.model');
 const { STATUS, PAGINATION } = require('../config/constants');
 
 /**
- * @desc    Get all culture items
- * @route   GET /api/culture
+ * @desc    Get all culture items (paginated, searchable, sorted)
+ * @route   GET /api/cultures
  * @access  Public
  */
 const getAllCulture = async (req, res, next) => {
@@ -23,10 +24,19 @@ const getAllCulture = async (req, res, next) => {
     const skip = (page - 1) * limit;
 
     const filter = {};
-    if (req.query.category) filter.category = req.query.category;
+    if (req.query.search) {
+      filter.$or = [
+        { title: { $regex: req.query.search, $options: 'i' } },
+        { description: { $regex: req.query.search, $options: 'i' } },
+      ];
+    }
+
+    const sortField = req.query.sort || 'updatedAt';
+    const sortDir = req.query.order === 'asc' ? 1 : -1;
+    const sortObj = { [sortField]: sortDir };
 
     const [items, total] = await Promise.all([
-      Culture.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Culture.find(filter).sort(sortObj).skip(skip).limit(limit),
       Culture.countDocuments(filter),
     ]);
 
@@ -36,7 +46,7 @@ const getAllCulture = async (req, res, next) => {
       total,
       page,
       pages: Math.ceil(total / limit),
-      data: { culture: items },
+      data: { cultures: items },
     });
   } catch (error) {
     next(error);
@@ -45,7 +55,7 @@ const getAllCulture = async (req, res, next) => {
 
 /**
  * @desc    Get single culture item
- * @route   GET /api/culture/:id
+ * @route   GET /api/cultures/:id
  * @access  Public
  */
 const getCultureById = async (req, res, next) => {
@@ -70,12 +80,19 @@ const getCultureById = async (req, res, next) => {
 
 /**
  * @desc    Create culture item
- * @route   POST /api/culture
+ * @route   POST /api/cultures
  * @access  Private/Admin
  */
 const createCulture = async (req, res, next) => {
   try {
-    const item = await Culture.create(req.body);
+    const { title, description, coverImageUrl, order, updatedBy } = req.body;
+    const item = await Culture.create({
+      title,
+      description,
+      coverImageUrl,
+      order: order ?? 0,
+      updatedBy: updatedBy || req.user?.id?.toString(),
+    });
 
     res.status(STATUS.CREATED).json({
       success: true,
@@ -89,12 +106,13 @@ const createCulture = async (req, res, next) => {
 
 /**
  * @desc    Update culture item
- * @route   PUT /api/culture/:id
+ * @route   PATCH /api/cultures/:id
  * @access  Private/Admin
  */
 const updateCulture = async (req, res, next) => {
   try {
-    const item = await Culture.findByIdAndUpdate(req.params.id, req.body, {
+    const update = { ...req.body, updatedBy: req.user?.id?.toString() };
+    const item = await Culture.findByIdAndUpdate(req.params.id, update, {
       new: true,
       runValidators: true,
     });
@@ -118,7 +136,7 @@ const updateCulture = async (req, res, next) => {
 
 /**
  * @desc    Delete culture item
- * @route   DELETE /api/culture/:id
+ * @route   DELETE /api/cultures/:id
  * @access  Private/Admin
  */
 const deleteCulture = async (req, res, next) => {

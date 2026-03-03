@@ -1,49 +1,110 @@
 // ============================================
-// Quiz Model
-// Quiz questions with multiple choice answers
-// Matches Flutter Quiz model structure
+// Quiz Model (Admin/Full)
+// Matches Flutter admin QuizModel (data/models/quiz_model.dart)
+// Fields: title, description, difficulty, topic, isPublished,
+//         questions[{id,question,options[4],correctIndex,explanation}], updatedBy
 // ============================================
 
 const mongoose = require('mongoose');
 
-const quizSchema = new mongoose.Schema(
+const quizQuestionSchema = new mongoose.Schema(
   {
-    quizId: {
-      type: Number,
-      unique: true,
-      required: true,
+    id: {
+      type: String,
+      required: [true, 'Question id is required'],
     },
-
     question: {
       type: String,
-      required: [true, 'Question is required'],
+      required: [true, 'Question text is required'],
       trim: true,
     },
+    options: {
+      type: [String],
+      validate: {
+        validator: (arr) => arr.length === 4,
+        message: 'Each question must have exactly 4 options',
+      },
+    },
+    correctIndex: {
+      type: Number,
+      required: true,
+      min: [0, 'correctIndex must be 0-3'],
+      max: [3, 'correctIndex must be 0-3'],
+    },
+    explanation: {
+      type: String,
+      default: null,
+    },
+  },
+  { _id: false }
+);
 
-    answers: {
-      type: String, // JSON string: ["Answer 1", "Answer 2", "Answer 3", "Answer 4"]
-      required: [true, 'Answers are required'],
+const quizSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      required: [true, 'Title is required'],
+      trim: true,
+      maxlength: [300, 'Title cannot exceed 300 characters'],
     },
 
-    correctAnswer: {
-      type: Number, // 0-3 index
-      required: [true, 'Correct answer index is required'],
-      min: [0, 'Correct answer index must be between 0 and 3'],
-      max: [3, 'Correct answer index must be between 0 and 3'],
+    description: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+
+    difficulty: {
+      type: String,
+      enum: {
+        values: ['easy', 'medium', 'hard'],
+        message: 'Difficulty must be easy, medium, or hard',
+      },
+      default: 'easy',
+    },
+
+    topic: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+
+    isPublished: {
+      type: Boolean,
+      default: false,
+    },
+
+    questions: {
+      type: [quizQuestionSchema],
+      default: [],
+    },
+
+    storyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Story',
+      default: null,
+    },
+
+    updatedBy: {
+      type: String,
+      default: null,
     },
   },
   {
     timestamps: true,
     toJSON: {
       virtuals: true,
-      transform: (doc, ret) => {
-        ret.quiz_id = ret.quizId;
-        ret.correct_answer = ret.correctAnswer;
+      transform: (_, ret) => {
         delete ret.__v;
         return ret;
       },
     },
+    toObject: { virtuals: true },
   }
 );
+
+quizSchema.index({ title: 'text', topic: 'text' });
+quizSchema.index({ isPublished: 1 });
+quizSchema.index({ updatedAt: -1 });
 
 module.exports = mongoose.model('Quiz', quizSchema);

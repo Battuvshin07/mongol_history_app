@@ -1,10 +1,10 @@
 // ============================================
 // Culture Routes
-// GET    /api/culture      - Get all culture items (public)
-// GET    /api/culture/:id  - Get single culture item (public)
-// POST   /api/culture      - Create culture item (admin)
-// PUT    /api/culture/:id  - Update culture item (admin)
-// DELETE /api/culture/:id  - Delete culture item (admin)
+// GET    /api/cultures      - Get all cultures (public)
+// GET    /api/cultures/:id  - Get single culture (public)
+// POST   /api/cultures      - Create culture (admin)
+// PATCH  /api/cultures/:id  - Update culture (admin)
+// DELETE /api/cultures/:id  - Delete culture (admin)
 // ============================================
 
 const express = require('express');
@@ -29,7 +29,8 @@ router.get('/:id', getCultureById);
 
 // Admin-only routes
 router.post('/', protect, authorize(ROLES.ADMIN), createCulture);
-router.put('/:id', protect, authorize(ROLES.ADMIN), updateCulture);
+router.patch('/:id', protect, authorize(ROLES.ADMIN), updateCulture);
+router.put('/:id', protect, authorize(ROLES.ADMIN), updateCulture); // backward compat
 router.delete('/:id', protect, authorize(ROLES.ADMIN), deleteCulture);
 
 module.exports = router;

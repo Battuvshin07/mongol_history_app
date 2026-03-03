@@ -111,29 +111,41 @@ const contentValidation = [
 ];
 
 // ============================================
-// Person Validation Rules
+// Person Validation Rules (admin PersonModel)
+// Fields: name, birthYear?, deathYear?, shortBio, avatarUrl?, tags[]
 // ============================================
 
 const personValidation = [
-  body('personId')
-    .notEmpty()
-    .withMessage('Person ID is required')
-    .isInt()
-    .withMessage('Person ID must be an integer'),
-
   body('name')
     .trim()
     .notEmpty()
-    .withMessage('Name is required'),
+    .withMessage('Name is required')
+    .isLength({ max: 200 })
+    .withMessage('Name cannot exceed 200 characters'),
 
-  body('description')
+  body('shortBio')
     .trim()
     .notEmpty()
-    .withMessage('Description is required'),
+    .withMessage('Short bio is required'),
 
-  body('birthDate').optional({ nullable: true }).isString(),
-  body('deathDate').optional({ nullable: true }).isString(),
-  body('imageUrl').optional({ nullable: true }).isString(),
+  body('birthYear')
+    .optional({ nullable: true })
+    .isInt()
+    .withMessage('Birth year must be an integer'),
+
+  body('deathYear')
+    .optional({ nullable: true })
+    .isInt()
+    .withMessage('Death year must be an integer'),
+
+  body('avatarUrl')
+    .optional({ nullable: true })
+    .isString(),
+
+  body('tags')
+    .optional()
+    .isArray()
+    .withMessage('Tags must be an array'),
 
   validate,
 ];
@@ -172,35 +184,112 @@ const eventValidation = [
 ];
 
 // ============================================
-// Quiz Validation Rules
+// Quiz Validation Rules (admin QuizModel)
+// Fields: title, description, difficulty, topic, isPublished, questions[]
 // ============================================
 
 const quizValidation = [
-  body('quizId')
-    .notEmpty()
-    .withMessage('Quiz ID is required')
-    .isInt()
-    .withMessage('Quiz ID must be an integer'),
-
-  body('question')
+  body('title')
     .trim()
     .notEmpty()
-    .withMessage('Question is required'),
+    .withMessage('Title is required')
+    .isLength({ max: 300 })
+    .withMessage('Title cannot exceed 300 characters'),
 
-  body('answers')
-    .notEmpty()
-    .withMessage('Answers are required')
-    .isString()
-    .withMessage('Answers must be a JSON string'),
+  body('difficulty')
+    .optional()
+    .isIn(['easy', 'medium', 'hard'])
+    .withMessage('Difficulty must be easy, medium, or hard'),
 
-  body('correctAnswer')
+  body('isPublished')
+    .optional()
+    .isBoolean()
+    .withMessage('isPublished must be a boolean'),
+
+  body('questions')
+    .optional()
+    .isArray()
+    .withMessage('Questions must be an array'),
+
+  body('questions.*.question')
+    .if(body('questions').exists())
+    .trim()
     .notEmpty()
-    .withMessage('Correct answer index is required')
+    .withMessage('Each question must have text'),
+
+  body('questions.*.options')
+    .if(body('questions').exists())
+    .isArray({ min: 4, max: 4 })
+    .withMessage('Each question must have exactly 4 options'),
+
+  body('questions.*.correctIndex')
+    .if(body('questions').exists())
     .isInt({ min: 0, max: 3 })
-    .withMessage('Correct answer must be between 0 and 3'),
+    .withMessage('correctIndex must be 0-3'),
 
   validate,
 ];
+
+// ============================================
+// Story Validation Rules
+// Fields: title, content, order, xpReward, quizId?, imageUrl?
+// ============================================
+
+const storyValidation = [
+  body('title')
+    .trim()
+    .notEmpty()
+    .withMessage('Title is required')
+    .isLength({ max: 300 })
+    .withMessage('Title cannot exceed 300 characters'),
+
+  body('content')
+    .trim()
+    .notEmpty()
+    .withMessage('Content is required'),
+
+  body('order')
+    .notEmpty()
+    .withMessage('Order is required')
+    .isInt({ min: 1 })
+    .withMessage('Order must be a positive integer'),
+
+  body('xpReward')
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage('xpReward must be a non-negative integer'),
+
+  body('quizId')
+    .optional({ nullable: true })
+    .isMongoId()
+    .withMessage('quizId must be a valid MongoDB id'),
+
+  validate,];
+
+// ============================================
+// Culture Validation Rules
+// Fields: title, description, coverImageUrl?, order?
+// ============================================
+
+const cultureValidation = [
+  body('title')
+    .trim()
+    .notEmpty()
+    .withMessage('Title is required')
+    .isLength({ max: 200 })
+    .withMessage('Title cannot exceed 200 characters'),
+
+  body('description')
+    .trim()
+    .notEmpty()
+    .withMessage('Description is required'),
+
+  body('order')
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage('Order must be a non-negative integer'),
+
+  validate,];
 
 // ============================================
 // Pagination Validation
@@ -228,5 +317,7 @@ module.exports = {
   personValidation,
   eventValidation,
   quizValidation,
+  storyValidation,
+  cultureValidation,
   paginationValidation,
 };

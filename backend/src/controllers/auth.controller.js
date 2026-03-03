@@ -148,11 +148,15 @@ const getProfile = async (req, res, next) => {
  */
 const updateProfile = async (req, res, next) => {
   try {
-    const { name, email } = req.body;
+    // Users can update these fields only (not role or totalXP directly)
+    const { name, displayName, bio, preferredLanguage, photoUrl } = req.body;
     const updateData = {};
 
-    if (name) updateData.name = name;
-    if (email) updateData.email = email;
+    if (name !== undefined) updateData.name = name;
+    if (displayName !== undefined) updateData.displayName = displayName;
+    if (bio !== undefined) updateData.bio = bio;
+    if (preferredLanguage !== undefined) updateData.preferredLanguage = preferredLanguage;
+    if (photoUrl !== undefined) updateData.photoUrl = photoUrl;
 
     const user = await User.findByIdAndUpdate(req.user.id, updateData, {
       new: true,

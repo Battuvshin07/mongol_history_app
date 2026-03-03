@@ -46,6 +46,36 @@ const userSchema = new mongoose.Schema(
       default: ROLES.USER,
     },
 
+    displayName: {
+      type: String,
+      trim: true,
+      maxlength: [100, 'Display name cannot exceed 100 characters'],
+      default: null,
+    },
+
+    photoUrl: {
+      type: String,
+      default: null,
+    },
+
+    bio: {
+      type: String,
+      maxlength: [500, 'Bio cannot exceed 500 characters'],
+      default: null,
+    },
+
+    preferredLanguage: {
+      type: String,
+      enum: ['mn', 'en'],
+      default: 'mn',
+    },
+
+    totalXP: {
+      type: Number,
+      default: 0,
+      min: [0, 'XP cannot be negative'],
+    },
+
     isActive: {
       type: Boolean,
       default: true,
@@ -116,8 +146,13 @@ userSchema.methods.toSafeObject = function () {
   return {
     id: this._id,
     name: this.name,
+    displayName: this.displayName,
     email: this.email,
     role: this.role,
+    photoUrl: this.photoUrl,
+    bio: this.bio,
+    preferredLanguage: this.preferredLanguage,
+    totalXP: this.totalXP,
     isActive: this.isActive,
     lastLogin: this.lastLogin,
     createdAt: this.createdAt,
