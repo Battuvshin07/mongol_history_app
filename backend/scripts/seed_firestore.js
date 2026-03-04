@@ -3,9 +3,7 @@
 // Firestore Seeder Script
 // Usage: node scripts/seed_firestore.js [--collection=<name>] [--dry-run]
 //
-// Sources (tries in order):
-//   1) Live MongoDB via Mongoose models (MONGO_URI in .env)
-//   2) JSON fixture files in scripts/fixtures/*.json
+// Source: JSON fixture files in scripts/fixtures/<collection>.json
 //
 // Options:
 //   --collection=<name>  Seed only this collection (e.g. --collection=persons)
@@ -17,15 +15,11 @@
 
 const path = require('path');
 const fs = require('fs');
-require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 // ── Firebase
 const { getFirebaseAdmin, admin } = require('../src/firebase/firebaseAdmin');
 getFirebaseAdmin();
 const db = admin.firestore();
-
-// ── Mongoose (optional – only if MONGO_URI is set)
-const mongoose = require('mongoose');
 
 // ── Parse CLI args
 const args = process.argv.slice(2);
@@ -39,20 +33,19 @@ const clearFirst = args.includes('--clear');
 const STRIP_FIELDS = ['password', 'passwordHash', '__v', 'salt'];
 
 // ──────────────────────────────────────────────────────────────────
-//  COLLECTION → MONGOOSE MODEL MAPPING
+//  COLLECTION LIST
 // ──────────────────────────────────────────────────────────────────
-// We require models lazily after Mongoose might be connected.
-// Fixture fallback file = scripts/fixtures/<collection>.json
+// Fixture file = scripts/fixtures/<collection>.json
 const COLLECTION_CONFIG = [
-  { collection: 'contents',       model: () => require('../src/models/Content.model') },
-  { collection: 'cultures',       model: () => require('../src/models/Culture.model') },
-  { collection: 'events',         model: () => require('../src/models/Event.model') },
-  { collection: 'family_trees',   model: () => require('../src/models/FamilyTree.model') },
-  { collection: 'persons',        model: () => require('../src/models/Person.model') },
-  { collection: 'person_details', model: () => require('../src/models/PersonDetail.model') },
-  { collection: 'progresses',     model: () => require('../src/models/Progress.model') },
-  { collection: 'quizzes',        model: () => require('../src/models/Quiz.model') },
-  { collection: 'stories',        model: () => require('../src/models/Story.model') },
+  { collection: 'contents' },
+  { collection: 'cultures' },
+  { collection: 'events' },
+  { collection: 'family_trees' },
+  { collection: 'persons' },
+  { collection: 'person_details' },
+  { collection: 'progresses' },
+  { collection: 'quizzes' },
+  { collection: 'stories' },
 ];
 
 // ──────────────────────────────────────────────────────────────────
@@ -174,57 +167,17 @@ function chunk(arr, size) {
 }
 
 // ──────────────────────────────────────────────────────────────────
-//  LOAD DATA
+//  LOAD DATA — fixture files only
 // ──────────────────────────────────────────────────────────────────
 
-let mongoConnected = false;
-
-async function connectMongo() {
-  if (mongoConnected) return true;
-  const uri = process.env.MONGO_URI;
-  if (!uri) {
-    console.warn('⚠  MONGO_URI not set – will use fixture JSON files as fallback');
-    return false;
-  }
-  try {
-    await mongoose.connect(uri, { serverSelectionTimeoutMS: 5000 });
-    console.log(`✔  MongoDB connected: ${uri}`);
-    mongoConnected = true;
-    return true;
-  } catch (err) {
-    console.warn(`⚠  MongoDB connection failed (${err.message}) – falling back to fixture files`);
-    return false;
-  }
-}
-
 /**
- * Load data for a collection.
+ * Load data for a collection from scripts/fixtures/<collection>.json
  * Returns an array of Firestore-ready {id, data} objects.
  */
-async function loadDocs(config) {
-  // ── Try Mongoose
-  if (mongoConnected) {
-    try {
-      const Model = config.model();
-      const docs = await Model.find({}).lean();
-      return docs.map((plain) => {
-        const id = (plain._id || '').toString();
-        delete plain._id;
-        delete plain.__v;
-        const sanitized = sanitize(plain);
-        const withTs = convertDates(sanitized);
-        return { id, data: withTs };
-      });
-    } catch (err) {
-      console.warn(`  ⚠  Mongoose load failed for "${config.collection}": ${err.message}`);
-      console.warn('     Falling back to fixture file...');
-    }
-  }
-
-  // ── Fixture fallback
+function loadDocs(config) {
   const fixturePath = path.join(__dirname, 'fixtures', `${config.collection}.json`);
   if (!fs.existsSync(fixturePath)) {
-    console.warn(`  ⚠  No fixture file found at: ${fixturePath} – skipping collection.`);
+    console.warn(`  ⚠  No fixture file: ${fixturePath} – skipping.`);
     return [];
   }
 
@@ -232,10 +185,9 @@ async function loadDocs(config) {
   const arr = Array.isArray(raw) ? raw : raw.data || [];
 
   return arr.map((plain) => {
-    // Accept _id.$oid (MongoDB Extended JSON) or _id string or autogenerate
     let id = plain._id;
     if (id && typeof id === 'object' && id.$oid) id = id.$oid;
-    if (!id) id = db.collection(config.collection).doc().id; // auto Firestore ID
+    if (!id) id = db.collection(config.collection).doc().id;
     const copy = { ...plain };
     delete copy._id;
     delete copy.__v;
@@ -257,7 +209,7 @@ async function seedCollection(config) {
     await clearCollection(collection);
   }
 
-  const docs = await loadDocs(config);
+  const docs = loadDocs(config);
 
   if (docs.length === 0) {
     console.log(`  ℹ  No documents found – collection skipped.`);
@@ -286,9 +238,6 @@ async function main() {
   if (isDryRun) console.log(' ⚠  DRY-RUN mode – no data will be written\n');
   if (clearFirst) console.log(' ⚠  --clear mode – existing docs will be deleted first\n');
 
-  // Connect to MongoDB (best-effort)
-  await connectMongo();
-
   // Filter to requested collection or run all
   const toSeed = targetCollection
     ? COLLECTION_CONFIG.filter((c) => c.collection === targetCollection)
@@ -304,8 +253,6 @@ async function main() {
   for (const config of toSeed) {
     await seedCollection(config);
   }
-
-  if (mongoConnected) await mongoose.disconnect();
 
   const elapsed = ((Date.now() - start) / 1000).toFixed(1);
   console.log(`\n🎉  Seeding complete in ${elapsed}s`);
