@@ -9,7 +9,8 @@
     "seed": "node src/utils/seeder.js",
     "seed:firestore": "node scripts/seed_firestore.js",
     "seed:firestore:dry": "node scripts/seed_firestore.js --dry-run",
-    "seed:firestore:clear": "node scripts/seed_firestore.js --clear"
+    "seed:firestore:clear": "node scripts/seed_firestore.js --clear",
+    "convert:assets": "node scripts/convert_assets.js"
   },
   "keywords": [
     "mongolia",
