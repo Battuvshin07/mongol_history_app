@@ -181,7 +181,7 @@ function loadDocs(config) {
     return [];
   }
 
-  const raw = JSON.parse(fs.readFileSync(fixturePath, 'utf8'));
+  const raw = JSON.parse(fs.readFileSync(fixturePath, 'utf8').replace(/^\uFEFF/, ''));
   const arr = Array.isArray(raw) ? raw : raw.data || [];
 
   return arr.map((plain) => {
