@@ -53,14 +53,24 @@ const COLLECTION_CONFIG = [
 // ──────────────────────────────────────────────────────────────────
 
 /**
- * Recursively convert JS Date objects → Firestore Timestamp.
+ * Recursively convert JS Date objects and ISO date strings → Firestore Timestamp.
  * Leaves everything else intact.
  */
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
+
 function convertDates(obj) {
   if (obj === null || obj === undefined) return obj;
 
   if (obj instanceof Date) {
     return admin.firestore.Timestamp.fromDate(obj);
+  }
+
+  // Detect ISO-8601 date strings (e.g. "2026-03-03T12:36:04.323Z")
+  if (typeof obj === 'string' && ISO_DATE_RE.test(obj)) {
+    const d = new Date(obj);
+    if (!isNaN(d.getTime())) {
+      return admin.firestore.Timestamp.fromDate(d);
+    }
   }
 
   if (Array.isArray(obj)) {
