@@ -40,7 +40,7 @@ const COLLECTION_CONFIG = [
   { collection: 'contents' },
   { collection: 'cultures' },
   { collection: 'events' },
-  { collection: 'family_trees' },
+  { collection: 'family_tree' },
   { collection: 'persons' },
   { collection: 'person_details' },
   { collection: 'progresses' },
