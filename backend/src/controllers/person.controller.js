@@ -86,13 +86,16 @@ const getPersonById = async (req, res, next) => {
  */
 const createPerson = async (req, res, next) => {
   try {
-    const { name, birthYear, deathYear, shortBio, avatarUrl, tags } = req.body;
+    const { name, birthYear, deathYear, shortBio, avatarUrl, title, fatherId, motherId, tags } = req.body;
     const person = await Person.create({
       name,
       birthYear,
       deathYear,
       shortBio,
       avatarUrl,
+      title: title || null,
+      fatherId: fatherId || null,
+      motherId: motherId || null,
       tags: tags || [],
       updatedBy: req.user?.id?.toString(),
     });
@@ -171,4 +174,4 @@ module.exports = {
   createPerson,
   updatePerson,
   deletePerson,
-};
+};

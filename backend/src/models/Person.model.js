@@ -36,6 +36,22 @@ const personSchema = new mongoose.Schema(
       default: null,
     },
 
+    title: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+
+    fatherId: {
+      type: String,
+      default: null,
+    },
+
+    motherId: {
+      type: String,
+      default: null,
+    },
+
     tags: {
       type: [String],
       default: [],
