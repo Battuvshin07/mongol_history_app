@@ -88,7 +88,7 @@ node scripts/seed_firestore.js --collection=stories --clear
 ### Valid collection names
 
 ```
-contents  cultures  events  family_trees  persons
+ cultures  events  family_trees  persons
 person_details  progresses  quizzes  stories
 ```
 
@@ -208,11 +208,6 @@ Note:
 
 ✔  MongoDB connected: mongodb://localhost:27017/mongol_history
 
-▶  Seeding "contents"...
-  ℹ  24 docs → 1 batch(es)
-  ✔  Batch 1/1 committed (24 docs)
-  ✅  "contents" done – 24 docs written.
-
 ▶  Seeding "persons"...
   ℹ  150 docs → 1 batch(es)
   ✔  Batch 1/1 committed (150 docs)
@@ -235,7 +230,6 @@ Note:
 
 | MongoDB Model | Firestore Collection |
 |---|---|
-| `Content.model.js` | `contents` |
 | `Culture.model.js` | `cultures` |
 | `Event.model.js` | `events` |
 | `FamilyTree.model.js` | `family_trees` |

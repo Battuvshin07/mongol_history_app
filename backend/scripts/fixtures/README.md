@@ -3,7 +3,6 @@
 Place JSON fixture files here when MongoDB is unavailable.
 File names must match collection names exactly:
 
-- `contents.json`
 - `cultures.json`
 - `events.json`
 - `family_trees.json`

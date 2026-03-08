@@ -37,7 +37,6 @@ const STRIP_FIELDS = ['password', 'passwordHash', '__v', 'salt'];
 // ──────────────────────────────────────────────────────────────────
 // Fixture file = scripts/fixtures/<collection>.json
 const COLLECTION_CONFIG = [
-  { collection: 'contents' },
   { collection: 'cultures' },
   { collection: 'events' },
   { collection: 'family_tree' },
