@@ -26,6 +26,18 @@ const cultureSchema = new mongoose.Schema(
       default: null,
     },
 
+    icon: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+
+    details: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+
     order: {
       type: Number,
       default: 0,
