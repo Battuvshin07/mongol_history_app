@@ -29,6 +29,7 @@ const storyRoutes = require('./src/routes/stories.routes');
 const progressRoutes = require('./src/routes/progress.routes');
 const usersRoutes = require('./src/routes/users.routes');
 const adminRoutes = require('./src/routes/admin.routes');
+const videoRoutes = require('./src/routes/video.routes');
 
 // Import error handling middleware
 const { errorHandler, notFound } = require('./src/middleware/error.middleware');
@@ -99,6 +100,7 @@ app.use('/api/stories', storyRoutes);
 app.use('/api/progress', progressRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/videos', videoRoutes);
 
 // ============================================
 // Error Handling
