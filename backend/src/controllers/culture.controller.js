@@ -85,11 +85,13 @@ const getCultureById = async (req, res, next) => {
  */
 const createCulture = async (req, res, next) => {
   try {
-    const { title, description, coverImageUrl, order, updatedBy } = req.body;
+    const { title, description, coverImageUrl, icon, details, order, updatedBy } = req.body;
     const item = await Culture.create({
       title,
       description,
       coverImageUrl,
+      icon: icon ?? null,
+      details: details ?? null,
       order: order ?? 0,
       updatedBy: updatedBy || req.user?.id?.toString(),
     });

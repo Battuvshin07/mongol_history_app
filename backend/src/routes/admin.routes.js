@@ -12,6 +12,12 @@
 // PUT    /api/admin/users/:id/activate       - Activate user
 // DELETE /api/admin/users/:id               - Delete user
 // GET    /api/admin/activity                 - Recent activity log
+//
+// Culture management (admin)
+// GET    /api/admin/cultures                 - List all cultures
+// POST   /api/admin/cultures                 - Create culture
+// PATCH  /api/admin/cultures/:id             - Update culture
+// DELETE /api/admin/cultures/:id             - Delete culture
 // ============================================
 
 const express = require('express');
@@ -28,6 +34,10 @@ const {
   activateUser,
   deleteUser,
   getRecentActivity,
+  listCultures,
+  createCulture,
+  updateCulture,
+  deleteCulture,
 } = require('../controllers/admin.controller');
 
 const { protect } = require('../middleware/auth.middleware');
@@ -55,5 +65,11 @@ router.delete('/users/:id', deleteUser);
 
 // Activity
 router.get('/activity', getRecentActivity);
+
+// Culture management
+router.get('/cultures', listCultures);
+router.post('/cultures', createCulture);
+router.patch('/cultures/:id', updateCulture);
+router.delete('/cultures/:id', deleteCulture);
 
 module.exports = router;

@@ -5,6 +5,7 @@
 
 const { STATUS } = require('../config/constants');
 const adminService = require('../services/admin.service');
+const Culture = require('../models/Culture.model');
 
 /**
  * @desc    Get dashboard quick stats
@@ -241,4 +242,92 @@ module.exports = {
   activateUser,
   deleteUser,
   getRecentActivity,
+  // Culture management
+  listCultures,
+  createCulture,
+  updateCulture,
+  deleteCulture,
 };
+
+// ── Culture CRUD (Admin) ─────────────────────────────────────────
+
+/**
+ * @desc    List all culture items (sorted by order)
+ * @route   GET /api/admin/cultures
+ * @access  Private/Admin
+ */
+async function listCultures(req, res, next) {
+  try {
+    const items = await Culture.find({}).sort({ order: 1 });
+    res.status(STATUS.OK).json({ success: true, count: items.length, data: { cultures: items } });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * @desc    Create a culture item
+ * @route   POST /api/admin/cultures
+ * @access  Private/Admin
+ *
+ * Body: { title, description, icon, details, coverImageUrl, order }
+ */
+async function createCulture(req, res, next) {
+  try {
+    const { title, description, icon, details, coverImageUrl, order } = req.body;
+    const item = await Culture.create({
+      title,
+      description,
+      icon: icon ?? null,
+      details: details ?? null,
+      coverImageUrl: coverImageUrl ?? null,
+      order: order ?? 0,
+      updatedBy: req.user?.id?.toString(),
+    });
+    res.status(STATUS.CREATED).json({
+      success: true,
+      message: 'Culture item created.',
+      data: { culture: item },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * @desc    Update a culture item
+ * @route   PATCH /api/admin/cultures/:id
+ * @access  Private/Admin
+ */
+async function updateCulture(req, res, next) {
+  try {
+    const update = { ...req.body, updatedBy: req.user?.id?.toString() };
+    const item = await Culture.findByIdAndUpdate(req.params.id, update, {
+      new: true,
+      runValidators: true,
+    });
+    if (!item) {
+      return res.status(STATUS.NOT_FOUND).json({ success: false, message: 'Culture item not found.' });
+    }
+    res.status(STATUS.OK).json({ success: true, message: 'Culture item updated.', data: { culture: item } });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * @desc    Delete a culture item
+ * @route   DELETE /api/admin/cultures/:id
+ * @access  Private/Admin
+ */
+async function deleteCulture(req, res, next) {
+  try {
+    const item = await Culture.findByIdAndDelete(req.params.id);
+    if (!item) {
+      return res.status(STATUS.NOT_FOUND).json({ success: false, message: 'Culture item not found.' });
+    }
+    res.status(STATUS.OK).json({ success: true, message: 'Culture item deleted.' });
+  } catch (err) {
+    next(err);
+  }
+}
