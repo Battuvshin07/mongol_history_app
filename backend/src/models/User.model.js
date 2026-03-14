@@ -150,7 +150,6 @@ userSchema.methods.toSafeObject = function () {
     email: this.email,
     role: this.role,
     photoUrl: this.photoUrl,
-    bio: this.bio,
     preferredLanguage: this.preferredLanguage,
     totalXP: this.totalXP,
     isActive: this.isActive,
